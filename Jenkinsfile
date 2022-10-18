@@ -41,7 +41,7 @@ pipeline {
         stage('Deploy to ubuntu'){
             steps{
                 sshagent(credentials : ["deploy-key"]) {
-                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${deployHost} \
+                    sh "ssh -o StrictHostKeyChecking=no geona@${deployHost} \
                         'docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin $DOCKERHUB_CREDENTIALS_PSW; \
                         docker run -d -p 80:8080 -t ${repository}:${currentBuild.number};'"
                 }
