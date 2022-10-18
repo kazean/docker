@@ -1,9 +1,10 @@
-def ecrLoginHelper="docker-credential-ecr-login"
-def ecrUrl="<AWS ECR URL>"
-def repository="<Image Repository Name>"
-def deployHost="<Deploy VM Private IP>"
+def repository="kazean/jenkins"
+def deployHost="172.30.1.55"
 
 pipeline {
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-jenkins')
+    }
     agent any
 
     stages {
@@ -19,26 +20,22 @@ pipeline {
                 """
             }
         }
+
         stage('Build Docker Image by Jib & Push to Docker Hub Repository') {
             steps {
-                withAWS(region:"${region}", credentials:"aws-key") {
-                    ecrLogin()
-                    sh """
-                        curl -O https://amazon-ecr-credential-helper-releases.s3.us-east-2.amazonaws.com/0.4.0/linux-amd64/${ecrLoginHelper}
-                        chmod +x ${ecrLoginHelper}
-                        mv ${ecrLoginHelper} /usr/local/bin/
-                        cd ${mainDir}
-                        ./gradlew jib -Djib.to.image=${ecrUrl}/${repository}:${currentBuild.number} -Djib.console='plain'
-                    """
-                }
+                sh """
+                    echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                    ./gradlew jib -Djib.to.image=${repository}:${currentBuild.number} -Djib.console='plain'
+                """
             }
         }
-        stage('Deploy to AWS EC2 VM'){
+
+        stage('Deploy to ubuntu'){
             steps{
                 sshagent(credentials : ["deploy-key"]) {
                     sh "ssh -o StrictHostKeyChecking=no ubuntu@${deployHost} \
-                     'aws ecr get-login-password --region ${region} | docker login --username AWS --password-stdin ${ecrUrl}/${repository}; \
-                      docker run -d -p 80:8080 -t ${ecrUrl}/${repository}:${currentBuild.number};'"
+                     'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin \
+                      docker run -d -p 80:8080 -t ${repository}:${currentBuild.number};'"
                 }
             }
         }
