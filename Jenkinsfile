@@ -22,10 +22,17 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image by Jib & Push to Docker Hub Repository') {
+        stage('Docker login') {
             steps {
                 sh """
                     echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                """
+            }
+        }
+
+        stage('Build Docker Image by Jib & Push to Docker Hub Repository') {
+            steps {
+                sh """
                     ./gradlew jib -Djib.to.image=${repository}:${currentBuild.number} -Djib.console='plain'
                 """
             }
