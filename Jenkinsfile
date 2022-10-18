@@ -41,11 +41,9 @@ pipeline {
         stage('Deploy to ubuntu'){
             steps{
                 sshagent(credentials : ["deploy-key"]) {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@${deployHost}
-                        echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-                        docker run -d -p 80:8080 -t ${repository}:${currentBuild.number}
-                      """
+                    sh "ssh -o StrictHostKeyChecking=no ubuntu@${deployHost} \
+                        'docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin $DOCKERHUB_CREDENTIALS_PSW; \
+                        docker run -d -p 80:8080 -t ${repository}:${currentBuild.number};'"
                 }
             }
         }
