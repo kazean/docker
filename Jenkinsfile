@@ -1,6 +1,6 @@
 def repository="kazean/jenkins"
-def deployHost="172.30.1.25"
-//def deployHost="192.168.0.28"
+// def deployHost="172.30.1.25"
+def deployHost="192.168.0.30"
 
 pipeline {
     environment {
